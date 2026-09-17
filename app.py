@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from typing import List, Tuple
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -17,7 +18,11 @@ import plotly.graph_objects as go
 from scipy.io import wavfile
 import streamlit as st
 
-from behaviorbench.config import QualityThresholds
+from behaviorbench.config import (
+    BehavioralFeatures,
+    ClipStatus,
+    QualityThresholds,
+)
 from behaviorbench.quality_gater import evaluate_clip_quality
 from behaviorbench.signal_extractor import (
     estimate_av_sync_drift,
@@ -25,7 +30,7 @@ from behaviorbench.signal_extractor import (
     extract_video_features,
 )
 
-# Set page configuration
+# Page configuration
 st.set_page_config(
     page_title="BehaviorBench | Multimodal Quality Gatekeeper",
     page_icon="🎯",
@@ -92,7 +97,7 @@ def extract_media(file_path: str, is_video: bool):
     temp_dir = tempfile.mkdtemp()
     audio_wav = os.path.join(temp_dir, "audio_16k.wav")
 
-    # Extract 16kHz mono audio
+    # Extract 16kHz mono audio via ffmpeg
     cmd_audio = [
         "ffmpeg",
         "-y",
@@ -180,8 +185,8 @@ threshold_sync = st.sidebar.slider(
 custom_thresholds = QualityThresholds(
     min_snr_db=threshold_snr,
     max_clipping_ratio=threshold_clipping / 100.0,
-    min_mean_luminance=threshold_lum,
-    max_av_sync_drift_ms=threshold_sync,
+    min_luminance=threshold_lum,
+    max_av_drift_ms=threshold_sync,
 )
 
 st.sidebar.markdown("---")
@@ -207,6 +212,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+sample_dir = os.path.join(os.path.dirname(__file__), "sample_data")
+
 # Input Mode Tabs
 tab1, tab2 = st.tabs(
     ["📁 Upload Your File (Video or Audio)", "🧪 Load Benchmark Demo Clip"]
@@ -215,8 +222,6 @@ tab1, tab2 = st.tabs(
 input_file_path = None
 is_video_input = False
 clip_name = "custom_stream"
-
-sample_dir = os.path.join(os.path.dirname(__file__), "sample_data")
 
 with tab1:
     uploaded_file = st.file_uploader(
@@ -270,11 +275,17 @@ with tab2:
         demo_filename, is_vid = demo_options[selected_demo]
         target_path = os.path.join(sample_dir, demo_filename)
         if os.path.exists(target_path):
-            input_file_path = target_path
-            is_video_input = is_vid
-            clip_name = os.path.splitext(demo_filename)[0]
+            st.session_state["demo_input_file_path"] = target_path
+            st.session_state["demo_is_video_input"] = is_vid
+            st.session_state["demo_clip_name"] = os.path.splitext(demo_filename)[0]
         else:
             st.error(f"Sample file {demo_filename} not found in {sample_dir}")
+
+# Use session state demo selection if set and tab1 is not uploading
+if not input_file_path and "demo_input_file_path" in st.session_state:
+    input_file_path = st.session_state["demo_input_file_path"]
+    is_video_input = st.session_state["demo_is_video_input"]
+    clip_name = st.session_state["demo_clip_name"]
 
 # Execution & Processing
 if input_file_path and os.path.exists(input_file_path):
@@ -294,48 +305,56 @@ if input_file_path and os.path.exists(input_file_path):
             audio_path, frames_meta, temp_workdir = extract_media(
                 input_file_path, is_video_input
             )
-            audio_feat = extract_audio_features(audio_path)
+            a_feat = extract_audio_features(audio_path, custom_thresholds)
 
             if is_video_input and frames_meta:
-                vid_feat = extract_video_features(frames_meta)
+                v_feat = extract_video_features(frames_meta)
                 av_drift = estimate_av_sync_drift(
-                    audio_feat.speech_intervals,
-                    [
-                        (f["timestamp_sec"], f["mouth_openness"])
-                        for f in frames_meta
-                    ],
+                    audio_rms=a_feat["rms_envelope"],
+                    audio_hop_len=a_feat["hop_len"],
+                    audio_rate=a_feat["sample_rate"],
+                    mouth_series=v_feat["mouth_series"],
+                    video_fps=v_feat["fps"],
                 )
             else:
                 # Load corresponding synthetic landmarks if available
                 syn_json = os.path.join(sample_dir, f"{clip_name}_landmarks.json")
                 if os.path.exists(syn_json):
-                    with open(syn_json, "r") as fj:
-                        meta_data = json.load(fj)
-                    vid_feat = extract_video_features(meta_data)
+                    v_feat = extract_video_features(syn_json)
                     av_drift = estimate_av_sync_drift(
-                        audio_feat.speech_intervals,
-                        [
-                            (f["timestamp_sec"], f["mouth_openness"])
-                            for f in meta_data
-                        ],
+                        audio_rms=a_feat["rms_envelope"],
+                        audio_hop_len=a_feat["hop_len"],
+                        audio_rate=a_feat["sample_rate"],
+                        mouth_series=v_feat["mouth_series"],
+                        video_fps=v_feat["fps"],
                     )
                 else:
-                    from behaviorbench.config import VideoFeatures
-
-                    vid_feat = VideoFeatures(
-                        total_frames=120,
-                        mean_face_confidence=0.98,
-                        mean_luminance=125.0,
-                        head_pitch_variance=0.1,
-                        head_yaw_variance=0.1,
-                        blink_count=2,
-                        mouth_openness_variance=0.03,
-                    )
+                    v_feat = extract_video_features([])
+                    v_feat["mean_luminance"] = 125.0
+                    v_feat["mean_face_confidence"] = 0.98
+                    v_feat["total_frames"] = 120
                     av_drift = 0.0
 
-            verdict = evaluate_clip_quality(
-                audio_feat, vid_feat, av_drift, custom_thresholds
+            features = BehavioralFeatures(
+                duration_sec=a_feat["duration_sec"],
+                speech_duration_sec=a_feat["speech_duration_sec"],
+                silence_ratio=a_feat["silence_ratio"],
+                hesitation_pauses_count=a_feat["hesitation_pauses_count"],
+                mean_pitch_hz=a_feat["mean_pitch_hz"],
+                pitch_variance=a_feat["pitch_variance"],
+                clipping_ratio=a_feat["clipping_ratio"],
+                snr_db=a_feat["snr_db"],
+                total_frames=v_feat["total_frames"],
+                mean_face_confidence=v_feat["mean_face_confidence"],
+                mean_luminance=v_feat["mean_luminance"],
+                head_pitch_variance=v_feat["head_pitch_variance"],
+                head_yaw_variance=v_feat["head_yaw_variance"],
+                blink_count=v_feat["blink_count"],
+                mouth_openness_variance=v_feat["mouth_openness_variance"],
+                av_sync_drift_ms=av_drift,
             )
+
+            verdict = evaluate_clip_quality(clip_name, features, custom_thresholds)
 
         status_class = {
             "PASS_CLEAN": "status-pass-clean",
@@ -354,9 +373,9 @@ if input_file_path and os.path.exists(input_file_path):
             unsafe_allow_html=True,
         )
 
-        if verdict.anomalies:
+        if verdict.anomalies_detected:
             st.warning("⚠️ **Detected Quality Anomalies:**")
-            for a in verdict.anomalies:
+            for a in verdict.anomalies_detected:
                 st.markdown(f"- {a}")
         else:
             st.success(
@@ -372,7 +391,7 @@ if input_file_path and os.path.exists(input_file_path):
             f"""
         <div class="metric-card">
             <div class="metric-label">Mean Vocal Pitch (F0)</div>
-            <div class="metric-value">{audio_feat.mean_pitch_hz:.1f} <span style="font-size:1rem;color:#64748b;">Hz</span></div>
+            <div class="metric-value">{features.mean_pitch_hz:.1f} <span style="font-size:1rem;color:#64748b;">Hz</span></div>
             <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Natural Range: 85-260 Hz</div>
         </div>
         """,
@@ -384,7 +403,7 @@ if input_file_path and os.path.exists(input_file_path):
             f"""
         <div class="metric-card">
             <div class="metric-label">Signal-to-Noise Ratio</div>
-            <div class="metric-value">{audio_feat.snr_db:.1f} <span style="font-size:1rem;color:#64748b;">dB</span></div>
+            <div class="metric-value">{features.snr_db:.1f} <span style="font-size:1rem;color:#64748b;">dB</span></div>
             <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Threshold: ≥ {custom_thresholds.min_snr_db:.1f} dB</div>
         </div>
         """,
@@ -396,7 +415,7 @@ if input_file_path and os.path.exists(input_file_path):
             f"""
         <div class="metric-card">
             <div class="metric-label">Audio Clipping Ratio</div>
-            <div class="metric-value">{audio_feat.clipping_ratio * 100:.2f} <span style="font-size:1rem;color:#64748b;">%</span></div>
+            <div class="metric-value">{features.clipping_ratio * 100:.2f} <span style="font-size:1rem;color:#64748b;">%</span></div>
             <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Limit: ≤ {custom_thresholds.max_clipping_ratio * 100:.1f}%</div>
         </div>
         """,
@@ -408,8 +427,8 @@ if input_file_path and os.path.exists(input_file_path):
             f"""
         <div class="metric-card">
             <div class="metric-label">Hesitation Pauses</div>
-            <div class="metric-value">{audio_feat.hesitation_pauses_count} <span style="font-size:1rem;color:#64748b;">pauses</span></div>
-            <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Silence Ratio: {audio_feat.silence_ratio * 100:.1f}%</div>
+            <div class="metric-value">{features.hesitation_pauses_count} <span style="font-size:1rem;color:#64748b;">pauses</span></div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:4px;">Silence Ratio: {features.silence_ratio * 100:.1f}%</div>
         </div>
         """,
             unsafe_allow_html=True,
@@ -422,7 +441,7 @@ if input_file_path and os.path.exists(input_file_path):
         audio_data = audio_data[:, 0]
     time_axis = np.linspace(0, len(audio_data) / sr, len(audio_data))
 
-    # Downsample for fast Plotly rendering if large
+    # Downsample for fast Plotly rendering
     step = max(1, len(audio_data) // 5000)
     fig = go.Figure()
     fig.add_trace(
@@ -436,7 +455,8 @@ if input_file_path and os.path.exists(input_file_path):
     )
 
     # Highlight speech intervals
-    for start, end in audio_feat.speech_intervals:
+    speech_intervals: List[Tuple[float, float]] = a_feat.get("speech_intervals", [])
+    for start, end in speech_intervals:
         fig.add_vrect(
             x0=start,
             x1=end,
@@ -468,44 +488,43 @@ if input_file_path and os.path.exists(input_file_path):
             [
                 {
                     "Metric": "Mean Frame Luminance",
-                    "Extracted": f"{vid_feat.mean_luminance:.1f} lux",
-                    "Threshold": f"≥ {custom_thresholds.min_mean_luminance:.1f} lux",
+                    "Extracted": f"{features.mean_luminance:.1f} lux",
+                    "Threshold": f"≥ {custom_thresholds.min_luminance:.1f} lux",
                     "Verdict": (
                         "PASS"
-                        if vid_feat.mean_luminance
-                        >= custom_thresholds.min_mean_luminance
+                        if features.mean_luminance >= custom_thresholds.min_luminance
                         else "FAIL"
                     ),
                 },
                 {
                     "Metric": "Face Detection Confidence",
-                    "Extracted": f"{vid_feat.mean_face_confidence * 100:.1f}%",
+                    "Extracted": f"{features.mean_face_confidence * 100:.1f}%",
                     "Threshold": f"≥ {custom_thresholds.min_face_confidence * 100:.1f}%",
                     "Verdict": (
                         "PASS"
-                        if vid_feat.mean_face_confidence
+                        if features.mean_face_confidence
                         >= custom_thresholds.min_face_confidence
                         else "FAIL"
                     ),
                 },
                 {
                     "Metric": "AV Synchronization Drift",
-                    "Extracted": f"{av_drift:+.1f} ms",
-                    "Threshold": f"|Drift| ≤ {custom_thresholds.max_av_sync_drift_ms:.0f} ms",
+                    "Extracted": f"{features.av_sync_drift_ms:+.1f} ms",
+                    "Threshold": f"|Drift| ≤ {custom_thresholds.max_av_drift_ms:.0f} ms",
                     "Verdict": (
                         "PASS"
-                        if abs(av_drift)
-                        <= custom_thresholds.max_av_sync_drift_ms
+                        if abs(features.av_sync_drift_ms)
+                        <= custom_thresholds.max_av_drift_ms
                         else "FAIL"
                     ),
                 },
                 {
                     "Metric": "Head Yaw Variance",
-                    "Extracted": f"{vid_feat.head_yaw_variance:.2f} deg²",
+                    "Extracted": f"{features.head_yaw_variance:.2f} deg²",
                     "Threshold": "Normal pose dynamics",
                     "Verdict": (
                         "EDGE_CASE"
-                        if vid_feat.head_yaw_variance > 50.0
+                        if features.head_yaw_variance > 18.0
                         else "PASS"
                     ),
                 },
@@ -519,27 +538,19 @@ if input_file_path and os.path.exists(input_file_path):
             "clip_id": clip_name,
             "status": verdict.status.value,
             "quality_score": verdict.quality_score,
-            "benchmark_slice": (
-                "gold_slice_edge_case"
-                if verdict.status.value == "PASS_EDGE_CASE"
-                else (
-                    "clean_baseline"
-                    if verdict.status.value == "PASS_CLEAN"
-                    else "excluded"
-                )
-            ),
-            "anomalies": verdict.anomalies,
+            "benchmark_slice": verdict.benchmark_slice,
+            "anomalies": verdict.anomalies_detected,
             "features": {
-                "duration_sec": audio_feat.duration_sec,
-                "speech_duration_sec": audio_feat.speech_duration_sec,
-                "silence_ratio": round(audio_feat.silence_ratio, 3),
-                "hesitation_pauses_count": audio_feat.hesitation_pauses_count,
-                "mean_pitch_hz": round(audio_feat.mean_pitch_hz, 1),
-                "clipping_ratio": round(audio_feat.clipping_ratio, 4),
-                "snr_db": round(audio_feat.snr_db, 1),
-                "mean_luminance": round(vid_feat.mean_luminance, 1),
-                "mean_face_confidence": round(vid_feat.mean_face_confidence, 3),
-                "av_sync_drift_ms": round(av_drift, 1),
+                "duration_sec": features.duration_sec,
+                "speech_duration_sec": features.speech_duration_sec,
+                "silence_ratio": round(features.silence_ratio, 3),
+                "hesitation_pauses_count": features.hesitation_pauses_count,
+                "mean_pitch_hz": round(features.mean_pitch_hz, 1),
+                "clipping_ratio": round(features.clipping_ratio, 4),
+                "snr_db": round(features.snr_db, 1),
+                "mean_luminance": round(features.mean_luminance, 1),
+                "mean_face_confidence": round(features.mean_face_confidence, 3),
+                "av_sync_drift_ms": round(features.av_sync_drift_ms, 1),
             },
         }
         json_str = json.dumps(export_payload, indent=2)

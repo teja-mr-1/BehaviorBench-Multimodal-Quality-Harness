@@ -3,11 +3,11 @@ clip_01_clean_active,PASS_CLEAN,clean_baseline,100.0,0,0.262,0.0,27.1,0.44,0.0,N
 clip_02_thoughtful_hesitant,PASS_EDGE_CASE,gold_slice_edge_case,100.0,1,0.44,0.0,34.3,60.5,-33.3,None
 clip_03_engaged_agreement,PASS_EDGE_CASE,gold_slice_edge_case,100.0,0,0.281,0.0,25.7,0.99,0.0,None
 clip_04_audio_clipping,REJECTED,none,55.0,0,0.256,0.3085,30.4,0.0,0.0,Audio clipping detected (30.9% > 1.5%)
-clip_05_dim_lighting,FLAGGED,none,65.0,0,0.363,0.0,27.8,1.77,0.0,Underexposed lighting (17.9 < 30.0 lum)
+clip_05_dim_lighting,FLAGGED,none,65.0,0,0.363,0.0,27.8,1.77,0.0,Underexposed lighting (18.1 < 30.0 lum)
 clip_06_sync_drift,REJECTED,none,60.0,0,0.338,0.0,27.6,0.44,-233.3,AV sync drift exceeded (233.3ms > 120.0ms)
 clip_07_side_profile_view,PASS_EDGE_CASE,gold_slice_edge_case,100.0,1,0.406,0.0,30.4,154.79,0.0,None
 clip_08_rapid_speech,PASS_EDGE_CASE,gold_slice_edge_case,100.0,0,0.207,0.0,23.8,1.94,0.0,None
 clip_09_subtle_micro_pause,PASS_EDGE_CASE,gold_slice_edge_case,100.0,1,0.389,0.0,29.0,3.16,0.0,None
-clip_10_noisy_cafe_background,FLAGGED,none,75.0,0,0.412,0.0,7.7,0.99,0.0,Low Signal-to-Noise Ratio (7.7 dB < 12.0 dB)
+clip_10_noisy_cafe_background,FLAGGED,none,75.0,0,0.406,0.0,7.7,0.99,0.0,Low Signal-to-Noise Ratio (7.7 dB < 12.0 dB)
 real_interview_female_linguist,FLAGGED,none,75.0,0,0.489,0.0,8.8,0.0,0.0,Low Signal-to-Noise Ratio (8.8 dB < 12.0 dB)
 real_interview_male_researcher,FLAGGED,none,75.0,1,0.464,0.0,8.7,0.0,0.0,Low Signal-to-Noise Ratio (8.7 dB < 12.0 dB)
