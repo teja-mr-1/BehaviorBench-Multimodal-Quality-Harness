@@ -1,0 +1,327 @@
+{
+  "metadata": {
+    "dataset_name": "BehaviorBench-GoldSlice-v1",
+    "total_clips_analyzed": 12,
+    "clean_baseline_count": 1,
+    "gold_slice_edge_case_count": 5,
+    "flagged_count": 4,
+    "rejected_count": 2,
+    "overall_pass_rate_pct": 50.0,
+    "mean_quality_score": 83.8,
+    "manifest_sha256_fingerprint": "6afd1b8ec844a46dbb0a645f396841f252c9447071d005e4145a2a9ec5ff41c0"
+  },
+  "records": [
+    {
+      "clip_id": "clip_01_clean_active",
+      "status": "PASS_CLEAN",
+      "quality_score": 100.0,
+      "benchmark_slice": "clean_baseline",
+      "anomalies": [],
+      "features": {
+        "duration_sec": 4.0,
+        "speech_duration_sec": 2.95,
+        "silence_ratio": 0.262,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 192.9,
+        "pitch_variance": 0.2,
+        "clipping_ratio": 0.0,
+        "snr_db": 27.1,
+        "total_frames": 120,
+        "mean_face_confidence": 0.979,
+        "mean_luminance": 134.9,
+        "head_pitch_variance": 0.32,
+        "head_yaw_variance": 0.44,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.039,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "clip_02_thoughtful_hesitant",
+      "status": "PASS_EDGE_CASE",
+      "quality_score": 100.0,
+      "benchmark_slice": "gold_slice_edge_case",
+      "anomalies": [],
+      "features": {
+        "duration_sec": 5.0,
+        "speech_duration_sec": 2.8,
+        "silence_ratio": 0.44,
+        "hesitation_pauses_count": 1,
+        "mean_pitch_hz": 177.8,
+        "pitch_variance": 0.0,
+        "clipping_ratio": 0.0,
+        "snr_db": 34.3,
+        "total_frames": 150,
+        "mean_face_confidence": 0.941,
+        "mean_luminance": 125.0,
+        "head_pitch_variance": 0.31,
+        "head_yaw_variance": 60.5,
+        "blink_count": 6,
+        "mouth_openness_variance": 0.04,
+        "av_sync_drift_ms": -33.3
+      }
+    },
+    {
+      "clip_id": "clip_03_engaged_agreement",
+      "status": "PASS_EDGE_CASE",
+      "quality_score": 100.0,
+      "benchmark_slice": "gold_slice_edge_case",
+      "anomalies": [],
+      "features": {
+        "duration_sec": 4.0,
+        "speech_duration_sec": 2.88,
+        "silence_ratio": 0.281,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 213.3,
+        "pitch_variance": 0.0,
+        "clipping_ratio": 0.0,
+        "snr_db": 25.7,
+        "total_frames": 120,
+        "mean_face_confidence": 0.97,
+        "mean_luminance": 140.0,
+        "head_pitch_variance": 10.1,
+        "head_yaw_variance": 0.99,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.0404,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "clip_04_audio_clipping",
+      "status": "REJECTED",
+      "quality_score": 55.0,
+      "benchmark_slice": null,
+      "anomalies": [
+        "Audio clipping detected (30.9% > 1.5%)"
+      ],
+      "features": {
+        "duration_sec": 4.0,
+        "speech_duration_sec": 2.98,
+        "silence_ratio": 0.256,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 242.4,
+        "pitch_variance": 0.0,
+        "clipping_ratio": 0.3085,
+        "snr_db": 30.4,
+        "total_frames": 120,
+        "mean_face_confidence": 0.948,
+        "mean_luminance": 130.0,
+        "head_pitch_variance": 0.0,
+        "head_yaw_variance": 0.0,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.0406,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "clip_05_dim_lighting",
+      "status": "FLAGGED",
+      "quality_score": 65.0,
+      "benchmark_slice": null,
+      "anomalies": [
+        "Underexposed lighting (17.9 < 30.0 lum)"
+      ],
+      "features": {
+        "duration_sec": 4.0,
+        "speech_duration_sec": 2.55,
+        "silence_ratio": 0.363,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 188.2,
+        "pitch_variance": 0.0,
+        "clipping_ratio": 0.0,
+        "snr_db": 27.8,
+        "total_frames": 120,
+        "mean_face_confidence": 0.721,
+        "mean_luminance": 17.9,
+        "head_pitch_variance": 0.32,
+        "head_yaw_variance": 1.77,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.0394,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "clip_06_sync_drift",
+      "status": "REJECTED",
+      "quality_score": 60.0,
+      "benchmark_slice": null,
+      "anomalies": [
+        "AV sync drift exceeded (233.3ms > 120.0ms)"
+      ],
+      "features": {
+        "duration_sec": 4.0,
+        "speech_duration_sec": 2.65,
+        "silence_ratio": 0.338,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 197.5,
+        "pitch_variance": 0.0,
+        "clipping_ratio": 0.0,
+        "snr_db": 27.6,
+        "total_frames": 120,
+        "mean_face_confidence": 0.951,
+        "mean_luminance": 120.0,
+        "head_pitch_variance": 0.0,
+        "head_yaw_variance": 0.44,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.0396,
+        "av_sync_drift_ms": -233.3
+      }
+    },
+    {
+      "clip_id": "clip_07_side_profile_view",
+      "status": "PASS_EDGE_CASE",
+      "quality_score": 100.0,
+      "benchmark_slice": "gold_slice_edge_case",
+      "anomalies": [],
+      "features": {
+        "duration_sec": 4.5,
+        "speech_duration_sec": 2.67,
+        "silence_ratio": 0.406,
+        "hesitation_pauses_count": 1,
+        "mean_pitch_hz": 172.5,
+        "pitch_variance": 0.6,
+        "clipping_ratio": 0.0,
+        "snr_db": 30.4,
+        "total_frames": 135,
+        "mean_face_confidence": 0.881,
+        "mean_luminance": 115.0,
+        "head_pitch_variance": 0.31,
+        "head_yaw_variance": 154.79,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.04,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "clip_08_rapid_speech",
+      "status": "PASS_EDGE_CASE",
+      "quality_score": 100.0,
+      "benchmark_slice": "gold_slice_edge_case",
+      "anomalies": [],
+      "features": {
+        "duration_sec": 3.5,
+        "speech_duration_sec": 2.77,
+        "silence_ratio": 0.207,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 228.6,
+        "pitch_variance": 0.0,
+        "clipping_ratio": 0.0,
+        "snr_db": 23.8,
+        "total_frames": 105,
+        "mean_face_confidence": 0.96,
+        "mean_luminance": 129.9,
+        "head_pitch_variance": 10.25,
+        "head_yaw_variance": 1.94,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.0403,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "clip_09_subtle_micro_pause",
+      "status": "PASS_EDGE_CASE",
+      "quality_score": 100.0,
+      "benchmark_slice": "gold_slice_edge_case",
+      "anomalies": [],
+      "features": {
+        "duration_sec": 4.5,
+        "speech_duration_sec": 2.75,
+        "silence_ratio": 0.389,
+        "hesitation_pauses_count": 1,
+        "mean_pitch_hz": 183.6,
+        "pitch_variance": 0.5,
+        "clipping_ratio": 0.0,
+        "snr_db": 29.0,
+        "total_frames": 135,
+        "mean_face_confidence": 0.96,
+        "mean_luminance": 125.1,
+        "head_pitch_variance": 0.05,
+        "head_yaw_variance": 3.16,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.0393,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "clip_10_noisy_cafe_background",
+      "status": "FLAGGED",
+      "quality_score": 75.0,
+      "benchmark_slice": null,
+      "anomalies": [
+        "Low Signal-to-Noise Ratio (7.7 dB < 12.0 dB)"
+      ],
+      "features": {
+        "duration_sec": 4.0,
+        "speech_duration_sec": 2.35,
+        "silence_ratio": 0.412,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 193.2,
+        "pitch_variance": 2.5,
+        "clipping_ratio": 0.0,
+        "snr_db": 7.7,
+        "total_frames": 120,
+        "mean_face_confidence": 0.938,
+        "mean_luminance": 120.0,
+        "head_pitch_variance": 0.3,
+        "head_yaw_variance": 0.99,
+        "blink_count": 3,
+        "mouth_openness_variance": 0.0397,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "real_interview_female_linguist",
+      "status": "FLAGGED",
+      "quality_score": 75.0,
+      "benchmark_slice": null,
+      "anomalies": [
+        "Low Signal-to-Noise Ratio (8.8 dB < 12.0 dB)"
+      ],
+      "features": {
+        "duration_sec": 5.97,
+        "speech_duration_sec": 3.05,
+        "silence_ratio": 0.489,
+        "hesitation_pauses_count": 0,
+        "mean_pitch_hz": 217.9,
+        "pitch_variance": 1044.2,
+        "clipping_ratio": 0.0,
+        "snr_db": 8.8,
+        "total_frames": 181,
+        "mean_face_confidence": 0.95,
+        "mean_luminance": 127.6,
+        "head_pitch_variance": 0.0,
+        "head_yaw_variance": 0.0,
+        "blink_count": 0,
+        "mouth_openness_variance": 0.0,
+        "av_sync_drift_ms": 0.0
+      }
+    },
+    {
+      "clip_id": "real_interview_male_researcher",
+      "status": "FLAGGED",
+      "quality_score": 75.0,
+      "benchmark_slice": null,
+      "anomalies": [
+        "Low Signal-to-Noise Ratio (8.7 dB < 12.0 dB)"
+      ],
+      "features": {
+        "duration_sec": 6.02,
+        "speech_duration_sec": 3.23,
+        "silence_ratio": 0.464,
+        "hesitation_pauses_count": 1,
+        "mean_pitch_hz": 109.5,
+        "pitch_variance": 3728.3,
+        "clipping_ratio": 0.0,
+        "snr_db": 8.7,
+        "total_frames": 180,
+        "mean_face_confidence": 0.95,
+        "mean_luminance": 64.4,
+        "head_pitch_variance": 0.0,
+        "head_yaw_variance": 0.0,
+        "blink_count": 0,
+        "mouth_openness_variance": 0.0,
+        "av_sync_drift_ms": 0.0
+      }
+    }
+  ]
+}

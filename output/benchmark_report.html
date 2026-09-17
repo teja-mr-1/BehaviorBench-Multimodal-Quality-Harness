@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BehaviorBench - Multimodal Benchmark Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 28px 20px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      background: #ffffff;
+      padding: 24px 30px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+    }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+    .tagline {
+      font-size: 0.92rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .hash-badge {
+      font-family: monospace;
+      font-size: 0.78rem;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+    }
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .kpi-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+    .kpi-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 6px;
+    }
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    /* Table */
+    .table-card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+    th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+    }
+    tr:hover td {
+      background: #f8fafc;
+    }
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .badge-clean {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .badge-edge {
+      background: #f3e8ff;
+      color: #6b21a8;
+      border: 1px solid #e9d5ff;
+    }
+    .badge-flagged {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .badge-rejected {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .progress-bar-bg {
+      width: 70px;
+      height: 7px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: #2563eb;
+      border-radius: 4px;
+    }
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title-row">
+        <div>
+          <h1>BehaviorBench Inspection Dashboard</h1>
+          <div class="tagline">Automated Multimodal Data Quality & Regression Benchmark Suite for Non-Verbal AI</div>
+        </div>
+        <div class="hash-badge" title="Deterministic SHA-256 integrity hash of this benchmark slice">
+          SHA-256: 6afd1b8ec844a46d...
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Clips Processed</div>
+        <div class="kpi-value">12</div>
+        <div class="kpi-sub">Conversational streams</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid #10b981;">
+        <div class="kpi-label">Pass Rate</div>
+        <div class="kpi-value" style="color: #10b981;">50.0%</div>
+        <div class="kpi-sub">1 Clean + 5 Edge Cases</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
+        <div class="kpi-label">Gold-Slice Edge Cases</div>
+        <div class="kpi-value" style="color: #8b5cf6;">5</div>
+        <div class="kpi-sub">Hesitations & Head Turns</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid #ef4444;">
+        <div class="kpi-label">Flagged / Rejected</div>
+        <div class="kpi-value" style="color: #ef4444;">6</div>
+        <div class="kpi-sub">2 Critical + 4 Flagged</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Mean Quality Score</div>
+        <div class="kpi-value">83.8 <span style="font-size: 1rem; color: #94a3b8;">/ 100</span></div>
+        <div class="kpi-sub">Across full test batch</div>
+      </div>
+    </div>
+
+    <!-- Inspection Table -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Clip ID</th>
+            <th>Validation Status</th>
+            <th>Quality Score</th>
+            <th>Acoustic Pauses</th>
+            <th>Audio Clipping (SNR)</th>
+            <th>Head Movement Variance</th>
+            <th>AV Sync Drift</th>
+            <th>Anomalies & Gating Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr>
+          <td><strong style="color: #0f172a;">clip_01_clean_active</strong></td>
+          <td><span class="badge badge-clean">Clean Baseline</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>100.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 100.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (26% silence)</td>
+          <td>0.00% (SNR: 27.1 dB)</td>
+          <td>Yaw: 0.4° | Pitch: 0.3°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;"><span style='color: #10b981;'>✓ Pass (No Anomalies)</span></td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_02_thoughtful_hesitant</strong></td>
+          <td><span class="badge badge-edge">Gold Slice (Edge Case)</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>100.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 100.0%;"></div></div>
+            </div>
+          </td>
+          <td>1 pauses (44% silence)</td>
+          <td>0.00% (SNR: 34.3 dB)</td>
+          <td>Yaw: 60.5° | Pitch: 0.3°</td>
+          <td>-33.3 ms</td>
+          <td style="font-size: 0.82rem;"><span style='color: #10b981;'>✓ Pass (No Anomalies)</span></td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_03_engaged_agreement</strong></td>
+          <td><span class="badge badge-edge">Gold Slice (Edge Case)</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>100.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 100.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (28% silence)</td>
+          <td>0.00% (SNR: 25.7 dB)</td>
+          <td>Yaw: 1.0° | Pitch: 10.1°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;"><span style='color: #10b981;'>✓ Pass (No Anomalies)</span></td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_04_audio_clipping</strong></td>
+          <td><span class="badge badge-rejected">Rejected</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>55.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 55.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (26% silence)</td>
+          <td>30.85% (SNR: 30.4 dB)</td>
+          <td>Yaw: 0.0° | Pitch: 0.0°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;">⚠️ Audio clipping detected (30.9% > 1.5%)</td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_05_dim_lighting</strong></td>
+          <td><span class="badge badge-flagged">Flagged</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>65.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 65.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (36% silence)</td>
+          <td>0.00% (SNR: 27.8 dB)</td>
+          <td>Yaw: 1.8° | Pitch: 0.3°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;">⚠️ Underexposed lighting (17.9 < 30.0 lum)</td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_06_sync_drift</strong></td>
+          <td><span class="badge badge-rejected">Rejected</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>60.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 60.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (34% silence)</td>
+          <td>0.00% (SNR: 27.6 dB)</td>
+          <td>Yaw: 0.4° | Pitch: 0.0°</td>
+          <td>-233.3 ms</td>
+          <td style="font-size: 0.82rem;">⚠️ AV sync drift exceeded (233.3ms > 120.0ms)</td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_07_side_profile_view</strong></td>
+          <td><span class="badge badge-edge">Gold Slice (Edge Case)</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>100.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 100.0%;"></div></div>
+            </div>
+          </td>
+          <td>1 pauses (41% silence)</td>
+          <td>0.00% (SNR: 30.4 dB)</td>
+          <td>Yaw: 154.8° | Pitch: 0.3°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;"><span style='color: #10b981;'>✓ Pass (No Anomalies)</span></td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_08_rapid_speech</strong></td>
+          <td><span class="badge badge-edge">Gold Slice (Edge Case)</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>100.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 100.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (21% silence)</td>
+          <td>0.00% (SNR: 23.8 dB)</td>
+          <td>Yaw: 1.9° | Pitch: 10.2°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;"><span style='color: #10b981;'>✓ Pass (No Anomalies)</span></td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_09_subtle_micro_pause</strong></td>
+          <td><span class="badge badge-edge">Gold Slice (Edge Case)</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>100.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 100.0%;"></div></div>
+            </div>
+          </td>
+          <td>1 pauses (39% silence)</td>
+          <td>0.00% (SNR: 29.0 dB)</td>
+          <td>Yaw: 3.2° | Pitch: 0.1°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;"><span style='color: #10b981;'>✓ Pass (No Anomalies)</span></td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">clip_10_noisy_cafe_background</strong></td>
+          <td><span class="badge badge-flagged">Flagged</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>75.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 75.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (41% silence)</td>
+          <td>0.00% (SNR: 7.7 dB)</td>
+          <td>Yaw: 1.0° | Pitch: 0.3°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;">⚠️ Low Signal-to-Noise Ratio (7.7 dB < 12.0 dB)</td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">real_interview_female_linguist</strong></td>
+          <td><span class="badge badge-flagged">Flagged</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>75.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 75.0%;"></div></div>
+            </div>
+          </td>
+          <td>0 pauses (49% silence)</td>
+          <td>0.00% (SNR: 8.8 dB)</td>
+          <td>Yaw: 0.0° | Pitch: 0.0°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;">⚠️ Low Signal-to-Noise Ratio (8.8 dB < 12.0 dB)</td>
+        </tr>
+        
+
+        <tr>
+          <td><strong style="color: #0f172a;">real_interview_male_researcher</strong></td>
+          <td><span class="badge badge-flagged">Flagged</span></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong>75.0</strong>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 75.0%;"></div></div>
+            </div>
+          </td>
+          <td>1 pauses (46% silence)</td>
+          <td>0.00% (SNR: 8.7 dB)</td>
+          <td>Yaw: 0.0° | Pitch: 0.0°</td>
+          <td>+0.0 ms</td>
+          <td style="font-size: 0.82rem;">⚠️ Low Signal-to-Noise Ratio (8.7 dB < 12.0 dB)</td>
+        </tr>
+        
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      BehaviorBench v0.1.0 &bull; Built by Raviteja Maddela (MSc Computer Science, DTU) &bull; Designed for Applied Multimodal ML at Interhuman AI
+    </div>
+  </div>
+</body>
+</html>

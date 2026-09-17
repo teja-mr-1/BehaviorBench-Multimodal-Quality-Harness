@@ -1,0 +1,86 @@
+[
+  {
+    "clip_id": "clip_01_clean_active",
+    "description": "Clean neutral conversation, balanced tone and steady head pose",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_01_clean_active.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_01_clean_active_landmarks.json",
+    "duration_sec": 4.0
+  },
+  {
+    "clip_id": "clip_02_thoughtful_hesitant",
+    "description": "Long vocal pause (hesitation 1.4s), reflective head tilt (Gold Slice Edge Case)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_02_thoughtful_hesitant.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_02_thoughtful_hesitant_landmarks.json",
+    "duration_sec": 5.0
+  },
+  {
+    "clip_id": "clip_03_engaged_agreement",
+    "description": "High agreement, frequent head nodding, active vocal feedback",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_03_engaged_agreement.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_03_engaged_agreement_landmarks.json",
+    "duration_sec": 4.0
+  },
+  {
+    "clip_id": "clip_04_audio_clipping",
+    "description": "Sudden volume burst with distorted microphone clipping (Flagged)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_04_audio_clipping.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_04_audio_clipping_landmarks.json",
+    "duration_sec": 4.0
+  },
+  {
+    "clip_id": "clip_05_dim_lighting",
+    "description": "Underexposed webcam video below luminance threshold (Flagged)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_05_dim_lighting.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_05_dim_lighting_landmarks.json",
+    "duration_sec": 4.0
+  },
+  {
+    "clip_id": "clip_06_sync_drift",
+    "description": "Audio-video desynchronization, mouth moves 240ms before audio (Flagged)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_06_sync_drift.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_06_sync_drift_landmarks.json",
+    "duration_sec": 4.0
+  },
+  {
+    "clip_id": "clip_07_side_profile_view",
+    "description": "Participant turned 35 degrees during deep listening (Gold Slice Edge Case)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_07_side_profile_view.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_07_side_profile_view_landmarks.json",
+    "duration_sec": 4.5
+  },
+  {
+    "clip_id": "clip_08_rapid_speech",
+    "description": "Fast-paced excited response with high speech density and rapid pauses",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_08_rapid_speech.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_08_rapid_speech_landmarks.json",
+    "duration_sec": 3.5
+  },
+  {
+    "clip_id": "clip_09_subtle_micro_pause",
+    "description": "Deliberate 0.9s thinking pause with stable posture (Gold Slice Edge Case)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_09_subtle_micro_pause.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_09_subtle_micro_pause_landmarks.json",
+    "duration_sec": 4.5
+  },
+  {
+    "clip_id": "clip_10_noisy_cafe_background",
+    "description": "Conversation in loud ambient environment with poor SNR (Flagged)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_10_noisy_cafe_background.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/clip_10_noisy_cafe_background_landmarks.json",
+    "duration_sec": 4.0
+  },
+  {
+    "clip_id": "real_interview_female_linguist",
+    "description": "Authentic real-world conversational recording (real_interview_female_linguist)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/real_interview_female_linguist.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/real_interview_female_linguist_landmarks.json",
+    "duration_sec": 6.0
+  },
+  {
+    "clip_id": "real_interview_male_researcher",
+    "description": "Authentic real-world conversational recording (real_interview_male_researcher)",
+    "audio_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/real_interview_male_researcher.wav",
+    "video_file": "/mnt/linuxdata/Projects/behavior-bench/sample_data/real_interview_male_researcher_landmarks.json",
+    "duration_sec": 6.0
+  }
+]

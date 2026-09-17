@@ -1,0 +1,25 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Streamlit secrets & credentials
+.streamlit/secrets.toml
+.streamlit/credentials.toml
+
+# Temporary frame extraction folders
+**/temp_*
+temp_*
+*.tmp
+
+# Operating system files
+.DS_Store
+Thumbs.db
