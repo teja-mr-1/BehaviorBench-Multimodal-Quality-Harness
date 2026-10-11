@@ -1,6 +1,6 @@
-# BehaviorBench 🎯
+# BehaviorBench 2.0 🎯
 
-**Automated Data Quality Gatekeeper & "Gold Slice" Benchmark Harness for Multimodal Behavioral AI**
+**Enterprise-Grade Multimodal Data Quality Gatekeeper & "Gold Slice" Social Signal Benchmark Platform**
 
 ![BehaviorBench Dashboard](output/dashboard_screenshot.png)
 
@@ -8,54 +8,59 @@
 
 ## 📌 Problem Overview
 
-Building AI systems that interpret non-verbal human communication (hesitation, vocal tone, engagement, facial expressions) is bottlenecked by **real-world input noise**:
-* **Audio Clipping:** Microphone distortion and volume bursts corrupt vocal frequency analysis.
-* **Ambient Noise & Echo:** Room reverberation and low SNR degrade acoustic prosody extraction.
-* **Lighting & Occlusion:** Underexposed video or sudden face occlusions break landmark tracking.
-* **Audio-Video Desynchronization:** Timestamp drift between mouth movement and vocal onset causes multi-modal model confusion.
-* **Edge-Case Annotation Gaps:** Subtle human cues (e.g. reflective pauses, nodding in agreement, looking away while thinking) get misclassified unless specifically tracked in benchmark splits.
+Building foundation models that interpret non-verbal human communication (hesitation, vocal tone, nodding, facial kinetics)—such as **Interhuman AI's Inter-2** omni-modal model—is bottlenecked by **real-world input data noise**:
+* **Audio Clipping:** Harsh digital saturation distorts vocal pitch (F0) tracking and prosodic analysis.
+* **Ambient Noise & Low SNR:** Room reverberation and background static corrupt subtle emotional cues.
+* **Timestamp Misalignment (AV Sync Drift):** Audio lagging behind facial landmarks by 50–120ms trains foundation models on corrupted cross-modal associations (e.g. hallucinated utterances or phantom audio).
+* **Missing Edge-Case Splits:** Subtle human cues (e.g., reflective pauses, nodding in agreement, looking away while thinking) get lost in random train/val splits unless tracked in benchmark "gold slices".
 
-**BehaviorBench** is an automated data quality pipeline, web application, and benchmark curation suite designed to ingest raw conversational video and audio streams, evaluate signal integrity against strict quality gates, and isolate high-value **"Gold Slice"** edge cases for regression testing.
+**BehaviorBench 2.0** is an automated data quality gatekeeper and benchmark curation suite designed to ingest raw conversational video and audio streams, evaluate signal integrity against strict multi-modal gates, purge corrupted samples, and isolate high-value **"Gold Slice"** edge cases exported directly into **Apache Parquet (`.parquet`)** for PyTorch / Hugging Face DataLoaders.
 
 ---
 
 ## 🏗️ Architecture & Pipeline Flow
 
 ```
-Raw Media Ingestion (Video MP4 / Audio WAV / Real-Time Upload)
-                     │
-                     ▼
+Raw Media Ingestion (Video MP4 / Audio WAV / Live Video Upload)
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────┐
-│  Phase 1: Multimodal Signal Extraction                 │
-│  - Acoustic: Frame RMS, VAD, Pause Duration, Pitch     │
-│  - Visual: Video Frame Luminance, Pose Stability       │
-│  - Temporal: Cross-Correlation AV Sync Drift (ms)      │
-└────────────────────┬───────────────────────────────────┘
-                     │
-                     ▼
+│  Phase 1: Real Multimodal Signal Extraction            │
+│  - Computer Vision (OpenCV): Haar Face Detection,      │
+│    Mouth Movement Velocity, Head Kinetic Pose (Yaw/Pitch)│
+│  - Acoustic (Librosa/SciPy): F0 Pitch Tracking,        │
+│    RMS Envelope, VAD Pause Sub-segmentation, SNR, ZCR  │
+│  - Temporal: 30Hz Cross-Correlation AV Sync Drift (ms) │
+└──────────────────────────────┬─────────────────────────┘
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────┐
-│  Phase 2: Automated Quality Gatekeeping                │
-│  - Clipping Gate: Threshold <= 1.5% max amplitude      │
-│  - SNR Gate: Minimum >= 12.0 dB                        │
-│  - Lighting Gate: Luminance >= 30 (0-255 scale)        │
-│  - AV Sync Drift Gate: Absolute drift <= 120 ms        │
-└────────────────────┬───────────────────────────────────┘
-                     │
-                     ▼
+│  Phase 2: Automated Quality Gatekeeping Engine         │
+│  - Audio Clipping Gate: <= 0.8% - 1.5% max amplitude   │
+│  - SNR Gate: Minimum >= 12.0 - 14.0 dB                 │
+│  - Lighting Gate: Luminance >= 30.0 - 35.0 (0-255 scale)│
+│  - AV Sync Drift Gate: Strict <= 45ms / Relaxed <= 60ms│
+└──────────────────────────────┬─────────────────────────┘
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────┐
-│  Phase 3: "Gold Slice" Benchmark Curation              │
+│  Phase 3: Inter-2 Social Signal Benchmark Curation     │
 │  - Clean Baseline: Standard conversational reference   │
-│  - Gold-Slice Edge Cases: Subtle hesitations & turns   │
+│  - Gold-Slice Hesitation: Silences >= 0.65s + pitch drop│
+│  - Gold-Slice Agreement: Kinetic vertical nods (pitch) │
+│  - Gold-Slice Reflection: Lateral head turns (yaw)     │
+│  - Gold-Slice Expressive Prosody: Dynamic vocal pitch  │
+│  - Quarantined: Audio distortion / AV sync misaligned  │
 │  - Cryptographic Fingerprint: SHA-256 Dataset Hash     │
-│  - Manifest Exports: JSON & CSV                        │
-└────────────────────┬───────────────────────────────────┘
-                     │
-                     ▼
+└──────────────────────────────┬─────────────────────────┘
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────┐
-│  Phase 4: Multi-Channel Interface                      │
-│  - Streamlit Cloud Web Application (Live File Upload)  │
-│  - Standalone Responsive HTML Dashboard Report         │
-│  - Rich Terminal CLI Inspection Table                  │
+│  Phase 4: Production Artifact Exports & Multi-Channel  │
+│  - Apache Parquet Splits (.parquet) for PyTorch Loaders │
+│  - Complete Auditable JSON Manifest & CSV Summary      │
+│  - Standalone Responsive HTML Audit Report             │
+│  - Interactive Streamlit 2.0 Web Dashboard             │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -64,50 +69,54 @@ Raw Media Ingestion (Video MP4 / Audio WAV / Real-Time Upload)
 ## 🚀 Quick Start
 
 ```bash
-# 1. Navigate to project
+# 1. Navigate to project directory
 cd /mnt/linuxdata/Projects/behavior-bench
 
-# 2. Activate virtual environment or install dependencies
+# 2. Activate virtual environment
 source .venv/bin/activate
-pip install -r requirements.txt
 
-# 3. Launch the Interactive Web Application (Upload video/audio live)
-streamlit run app.py
+# 3. Run automated test suite (100% test pass rate)
+python -m pytest tests/ -v
 
-# 4. Or run the automated benchmark runner with real & synthetic clips
+# 4. Run the end-to-end benchmark curation pipeline
 python run_demo.py
+
+# 5. Ingest and analyze any real-world MP4 video
+python ingest_real_video.py sample_data/real_interview_male_researcher.mp4
+
+# 6. Launch the Interactive Web Application (Live file drag-and-drop)
+streamlit run app.py
 ```
 
 ---
 
-## 🌐 Live Cloud Deployment (Free & Immediate)
+## 📊 Benchmark Partition Taxonomy
 
-You can deploy this application publicly so users and recruiters can drag-and-drop video/audio files directly in their browser:
-
-### Option 1: Streamlit Community Cloud (Recommended)
-1. Push this repository to GitHub: `https://github.com/teja-mr-1/BehaviorBench-Multimodal-Quality-Harness`
-2. Go to [share.streamlit.io](https://share.streamlit.io) and log in with GitHub.
-3. Select your repository, branch `main`, and set Main file path to `app.py`.
-4. The application automatically detects `packages.txt` (`ffmpeg`) and `requirements.txt`.
-5. Deploy! Your app will be live at `https://behaviorbench.streamlit.app`.
-6. Embed it directly in your portfolio card via iframe using `?embed=true`.
-
-### Option 2: Hugging Face Spaces
-1. Create a new Space on [huggingface.co/spaces](https://huggingface.co/spaces).
-2. Select **Streamlit** SDK.
-3. Push files to the Hugging Face Space Git remote.
-4. Live instance provides 16 GB RAM and free public hosting.
+| Category | Criteria | Purpose in Foundation Model Training |
+| :--- | :--- | :--- |
+| **Clean Baseline** | Passed all gates, normal cadence, steady posture | Standard conversational reference set ensuring baseline performance. |
+| **Gold Slice: Hesitation** | Passed all gates, pauses $\ge 0.65\text{s}$, acoustic pause duration | Tests model sensitivity to conversational hesitation and uncertainty without noise. |
+| **Gold Slice: Agreement** | Passed all gates, rhythmic vertical head nodding | Evaluates non-verbal affirmation detection. |
+| **Gold Slice: Reflection** | Passed all gates, lateral head yaw turns $> 18^\circ$ | Measures gaze deflection and cognitive reflection. |
+| **Gold Slice: Expressive** | Passed all gates, high F0 vocal pitch standard deviation | Benchmark split for affective expressiveness and emotional engagement. |
+| **Quarantined** | Marginal SNR ($< 12\text{dB}$), minor sync drift ($> 45\text{ms}$) | Isolated in quarantine split for manual researcher audit. |
+| **Rejected** | Hard failures (audio clipping $> 1.5\%$, severe darkness, sync drift $> 120\text{ms}$) | Purged immediately from training compute pipelines. |
 
 ---
 
-## 📊 Benchmark Curation Logic
+## 📦 Apache Parquet ML Splits
 
-| Category | Criteria | Purpose |
-| :--- | :--- | :--- |
-| **Clean Baseline** | Passed all gates, normal cadence, steady posture | Ensures models maintain baseline accuracy on standard conversational speech. |
-| **Gold Slice (Edge Cases)** | Passed all gates, but contains long pauses (>0.8s), expressive head nods, or lateral head turns (>18°) | Tests model robustness against subtle, non-verbal behavioral nuances without corrupted data. |
-| **Flagged** | Non-critical warnings (e.g. ambient room echo, low SNR) | Quarantined for manual review before entering training splits. |
-| **Rejected** | Hard failures (clipping >1.5%, severe darkness, sync drift >120ms) | Blocked from ever entering model training runs or evaluations. |
+The curation engine automatically exports native Parquet files directly readable by Hugging Face `datasets` and PyTorch:
+```python
+import pandas as pd
+
+# Load curated gold-slice edge cases into Python
+df_gold = pd.read_parquet("output/benchmark_gold_slice_edgecases.parquet")
+print(df_gold[["clip_id", "social_signal", "quality_score", "snr_db"]])
+
+# Load clean baseline
+df_clean = pd.read_parquet("output/benchmark_clean_baseline.parquet")
+```
 
 ---
 
@@ -115,35 +124,46 @@ You can deploy this application publicly so users and recruiters can drag-and-dr
 
 ```
 /mnt/linuxdata/Projects/behavior-bench/
-├── app.py                     # Streamlit web application (drag-and-drop video/audio upload)
-├── packages.txt               # System dependencies (ffmpeg) for Streamlit Cloud
-├── requirements.txt           # Python dependencies (Streamlit, Plotly, SciPy, Pydantic)
-├── run_demo.py                # One-command CLI & batch runner
-├── ingest_real_video.py       # FFmpeg video ingestion & frame sampling script
+├── app.py                          # Streamlit 2.0 web app (multi-signal synchronized Plotly timeline)
+├── packages.txt                    # System dependencies (ffmpeg) for deployment
+├── requirements.txt                # Production dependencies (OpenCV, Librosa, PyArrow, SciPy)
+├── run_demo.py                     # One-command CLI & batch runner
+├── ingest_real_video.py            # Real MP4 video ingestion via OpenCV & ffmpeg
 ├── behaviorbench/
 │   ├── __init__.py
-│   ├── config.py              # Pydantic schemas & quality thresholds
-│   ├── data_generator.py      # Conversational audio-video synthesizer
-│   ├── signal_extractor.py    # Acoustic, visual & AV sync feature extractor
-│   ├── quality_gater.py       # Automated pass/flag/reject gatekeeper
-│   ├── benchmark_curator.py   # Gold-slice partitioner & SHA-256 hasher
-│   ├── reporter.py            # Responsive HTML dashboard generator
-│   └── cli.py                 # Rich CLI interface
-├── sample_data/               # Real interview clips (.mp4) and test media (.wav, .json)
+│   ├── config.py                   # Pydantic schemas, Interhuman presets & SocialSignalCategory
+│   ├── vision_tracker.py           # Real OpenCV computer vision tracking (face, mouth, head pose)
+│   ├── signal_extractor.py         # Librosa/Soundfile acoustic prosody & cross-correlation AV sync
+│   ├── quality_gater.py            # Automated multi-level gatekeeper & social signal slicer
+│   ├── benchmark_curator.py        # Parquet exporter, gold-slice partitioner & SHA-256 hasher
+│   ├── data_generator.py           # Conversational audio-video synthesizer
+│   ├── reporter.py                 # Responsive HTML dashboard generator
+│   └── cli.py                      # Rich CLI interface with Interhuman presets
+├── tests/
+│   ├── test_signal_extractor.py    # Unit tests for clipping, SNR, and AV sync cross-correlation
+│   ├── test_quality_gater.py       # Unit tests for clean, gold-slice, flagged, and rejected gates
+│   ├── test_benchmark_curator.py   # Unit tests for Parquet splits and SHA-256 integrity
+│   └── test_vision_tracker.py      # Unit tests for real OpenCV video tracking
+├── sample_data/                    # Real interview MP4 clips and test media
 └── output/
-    ├── benchmark_manifest.json# Complete auditable JSON benchmark
-    ├── benchmark_summary.csv  # Flat summary table
-    └── benchmark_report.html  # Interactive HTML dashboard
+    ├── benchmark_full_dataset.parquet          # Complete dataset in Apache Parquet
+    ├── benchmark_gold_slice_edgecases.parquet  # Curated edge cases in Parquet
+    ├── benchmark_clean_baseline.parquet        # Clean baseline split in Parquet
+    ├── benchmark_quarantined.parquet           # Quarantined split in Parquet
+    ├── benchmark_manifest.json                 # Auditable JSON manifest
+    ├── benchmark_summary.csv                   # Flat tabular summary
+    └── benchmark_report.html                   # Interactive standalone HTML dashboard
 ```
 
 ---
 
-## 🎯 Startup Alignment
+## 🎯 Direct Alignment with Interhuman.ai
 
-Built to mirror daily data engineering in applied behavioral AI teams (such as **Interhuman AI**):
-1. **Lightweight & Pragmatic:** Zero heavy framework bloat; runs in seconds on CPU.
-2. **Automates Unsexy Work:** Catches corrupted audio and video streams before wasting expensive GPU training compute.
-3. **100% Repeatable:** Deterministic SHA-256 fingerprinting ensures regression benchmarks stay locked across model releases.
+Built to directly answer the engineering and data curation requirements for **Interhuman.ai**:
+1. **Solves Their Real Pain Point:** Eliminates audio clipping, SNR degradation, and AV sync drift before training multimodal foundation models (stopping timestamp hallucination bugs).
+2. **Gold Slice Benchmarking:** Automatically partitions conversational video into targeted social signal splits (*Hesitation*, *Agreement*, *Expressive*, *Reflection*).
+3. **Zero-Friction ML Plumbing:** Outputs **Apache Parquet** splits ready for PyTorch / Hugging Face `DataLoaders`.
+4. **100% Deterministic & Auditable:** Every dataset release is fingerprinted with a cryptographically verifiable SHA-256 hash.
 
 ---
 

@@ -1,42 +1,53 @@
-"""Multimodal signal extraction module for BehaviorBench.
+"""Multimodal signal extraction module for BehaviorBench 2.0.
 
-Extracts acoustic features (pitch, pause/hesitation duration, clipping, SNR)
+Extracts acoustic prosody (F0 pitch, pause/hesitation duration, clipping, SNR, ZCR)
 and visual features (head pose variance, luminance, face confidence, blinks),
-along with audio-visual synchronization drift estimation.
+along with audio-visual synchronization drift estimation via cross-correlation.
 """
 
 import json
 from typing import List, Optional, Tuple, Union
-import wave
 import numpy as np
 from scipy.signal import correlate
+import soundfile as sf
 from behaviorbench.config import BehavioralFeatures, QualityThresholds
 
 
-def extract_audio_features(wav_path: str, thresholds: Optional[QualityThresholds] = None) -> dict:
-    """Extract acoustic features and voice activity metrics from WAV audio."""
+def extract_audio_features(
+    wav_path: str,
+    thresholds: Optional[QualityThresholds] = None,
+    use_librosa_yin: bool = False,
+) -> dict:
+    """Extract acoustic features, prosody, and voice activity metrics from WAV audio."""
     if thresholds is None:
         thresholds = QualityThresholds()
 
-    with wave.open(wav_path, "r") as wf:
-        n_channels = wf.getnchannels()
-        sampwidth = wf.getsampwidth()
-        rate = wf.getframerate()
-        n_frames = wf.getnframes()
-        raw_bytes = wf.readframes(n_frames)
+    # Load audio cleanly via soundfile
+    try:
+        data, rate = sf.read(wav_path, dtype="float32")
+        if data.ndim > 1:
+            samples = data.mean(axis=1)
+        else:
+            samples = data
+    except Exception:
+        # Fallback to standard wave reader
+        import wave
+        with wave.open(wav_path, "r") as wf:
+            n_channels = wf.getnchannels()
+            sampwidth = wf.getsampwidth()
+            rate = wf.getframerate()
+            n_frames = wf.getnframes()
+            raw_bytes = wf.readframes(n_frames)
+        if sampwidth == 2:
+            samples = np.frombuffer(raw_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+        elif sampwidth == 4:
+            samples = np.frombuffer(raw_bytes, dtype=np.int32).astype(np.float32) / 2147483648.0
+        else:
+            samples = np.frombuffer(raw_bytes, dtype=np.uint8).astype(np.float32) / 128.0 - 1.0
+        if n_channels > 1:
+            samples = samples.reshape(-1, n_channels).mean(axis=1)
 
-    duration_sec = n_frames / rate if rate > 0 else 0.0
-
-    # Unpack to float32 between -1.0 and 1.0
-    if sampwidth == 2:
-        samples = np.frombuffer(raw_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-    elif sampwidth == 4:
-        samples = np.frombuffer(raw_bytes, dtype=np.int32).astype(np.float32) / 2147483648.0
-    else:
-        samples = np.frombuffer(raw_bytes, dtype=np.uint8).astype(np.float32) / 128.0 - 1.0
-
-    if n_channels > 1:
-        samples = samples.reshape(-1, n_channels).mean(axis=1)
+    duration_sec = len(samples) / rate if rate > 0 else 0.0
 
     if len(samples) == 0:
         return {
@@ -48,10 +59,11 @@ def extract_audio_features(wav_path: str, thresholds: Optional[QualityThresholds
             "pitch_variance": 0.0,
             "clipping_ratio": 0.0,
             "snr_db": 0.0,
+            "zero_crossing_rate": 0.0,
             "rms_envelope": np.zeros(1),
             "sample_rate": rate,
             "hop_len": 400,
-            "speech_intervals": []
+            "speech_intervals": [],
         }
 
     # 1. Audio clipping detection (samples at +/- 0.96 or higher)
@@ -72,7 +84,7 @@ def extract_audio_features(wav_path: str, thresholds: Optional[QualityThresholds
     rms_envelope = np.array(rms_envelope)
 
     # 3. Voice Activity & Hesitation Detection
-    noise_floor = np.percentile(rms_envelope, 15)
+    noise_floor = np.percentile(rms_envelope, 15) if len(rms_envelope) > 0 else 0.01
     max_energy = np.max(rms_envelope) if len(rms_envelope) > 0 else 1.0
     energy_threshold = max(0.015, noise_floor + 0.15 * (max_energy - noise_floor))
     is_speech_frame = rms_envelope > energy_threshold
@@ -123,22 +135,38 @@ def extract_audio_features(wav_path: str, thresholds: Optional[QualityThresholds
     else:
         snr_db = float(10.0 * np.log10(max(1.0, speech_energy / silence_energy)))
 
-    # 5. Fundamental Frequency (F0) estimate via autocorrelation on speech
+    # 5. Fundamental Frequency (F0) estimate
     pitches = []
-    for i in range(0, len(samples) - 1024, 2048):
-        chunk = samples[i : i + 1024]
-        if np.std(chunk) > 0.05:
-            corr = np.correlate(chunk, chunk, mode="full")
-            corr = corr[len(corr) // 2 :]
-            min_lag = int(rate / 350)
-            max_lag = int(rate / 50)
-            if max_lag < len(corr):
-                peak_lag = min_lag + np.argmax(corr[min_lag:max_lag])
-                if corr[peak_lag] > 0.3 * corr[0]:
-                    pitches.append(rate / peak_lag)
+    if use_librosa_yin:
+        try:
+            import librosa
+            f0_series = librosa.yin(samples, fmin=65, fmax=400, sr=rate, hop_length=hop_len)
+            valid_pitches = f0_series[~np.isnan(f0_series) & (f0_series > 50) & (f0_series < 400)]
+            if len(valid_pitches) > 0:
+                pitches = list(valid_pitches)
+        except Exception:
+            pitches = []
+
+    if not pitches:
+        # High-performance autocorrelation estimator
+        for i in range(0, len(samples) - 1024, 2048):
+            chunk = samples[i : i + 1024]
+            if np.std(chunk) > 0.05:
+                corr = np.correlate(chunk, chunk, mode="full")
+                corr = corr[len(corr) // 2 :]
+                min_lag = int(rate / 350)
+                max_lag = int(rate / 50)
+                if max_lag < len(corr):
+                    peak_lag = min_lag + np.argmax(corr[min_lag:max_lag])
+                    if corr[peak_lag] > 0.3 * corr[0]:
+                        pitches.append(rate / peak_lag)
 
     mean_pitch = float(np.mean(pitches)) if pitches else 180.0
     pitch_variance = float(np.var(pitches)) if len(pitches) > 1 else 10.0
+
+    # 6. Zero Crossing Rate (ZCR)
+    zero_crossings = np.nonzero(np.diff(samples > 0))[0]
+    zcr = float(len(zero_crossings) / max(1, len(samples)))
 
     return {
         "duration_sec": round(duration_sec, 2),
@@ -149,6 +177,7 @@ def extract_audio_features(wav_path: str, thresholds: Optional[QualityThresholds
         "pitch_variance": round(pitch_variance, 1),
         "clipping_ratio": round(clipping_ratio, 4),
         "snr_db": round(snr_db, 1),
+        "zero_crossing_rate": round(zcr, 4),
         "rms_envelope": rms_envelope,
         "sample_rate": rate,
         "hop_len": hop_len,
@@ -241,32 +270,35 @@ def estimate_av_sync_drift(
 
     sig2 = mouth_series - np.mean(mouth_series)
     std2 = np.std(sig2)
-    if std2 < 0.01:
+    if std2 < 0.005:
         return 0.0  # Mouth movement was static or untracked
     sig2 /= std2
 
     # Cross-correlation within +/- 500ms lag window (+/- 15 frames at 30fps)
     max_lag_frames = int(0.500 * video_fps)
     corr = correlate(sig1, sig2, mode="full")
-    mid_idx = len(corr) // 2
-    window = corr[max(0, mid_idx - max_lag_frames) : min(len(corr), mid_idx + max_lag_frames + 1)]
+    lags = np.arange(-len(sig2) + 1, len(sig1))
+    valid_mask = (lags >= -max_lag_frames) & (lags <= max_lag_frames)
 
-    if len(window) == 0:
+    if not np.any(valid_mask):
         return 0.0
 
-    peak_offset = np.argmax(window) - max_lag_frames
-    drift_ms = float((peak_offset / video_fps) * 1000.0)
+    best_lag = lags[valid_mask][np.argmax(corr[valid_mask])]
+    drift_ms = float((best_lag / video_fps) * 1000.0)
     return round(drift_ms, 1)
 
 
 def extract_multimodal_features(
-    wav_path: str, landmarks_path: str, thresholds: Optional[QualityThresholds] = None
+    wav_path: str,
+    landmarks_path: str,
+    thresholds: Optional[QualityThresholds] = None,
+    use_librosa_yin: bool = False,
 ) -> BehavioralFeatures:
     """Extract complete multimodal feature set for a conversation clip."""
     if thresholds is None:
         thresholds = QualityThresholds()
 
-    a_feat = extract_audio_features(wav_path, thresholds)
+    a_feat = extract_audio_features(wav_path, thresholds, use_librosa_yin=use_librosa_yin)
     v_feat = extract_video_features(landmarks_path)
 
     drift_ms = estimate_av_sync_drift(
@@ -286,6 +318,7 @@ def extract_multimodal_features(
         pitch_variance=a_feat["pitch_variance"],
         clipping_ratio=a_feat["clipping_ratio"],
         snr_db=a_feat["snr_db"],
+        zero_crossing_rate=a_feat.get("zero_crossing_rate", 0.05),
         total_frames=v_feat["total_frames"],
         mean_face_confidence=v_feat["mean_face_confidence"],
         mean_luminance=v_feat["mean_luminance"],

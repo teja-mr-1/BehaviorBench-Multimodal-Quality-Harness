@@ -1,7 +1,7 @@
-"""Interactive HTML report generator for BehaviorBench.
+"""Interactive HTML report generator for BehaviorBench 2.0.
 
 Generates a standalone, responsive HTML dashboard presenting benchmark metrics,
-quality gate statistics, and individual clip behavioral profiles.
+quality gate statistics, individual clip behavioral profiles, and Parquet export info.
 """
 
 import json
@@ -10,17 +10,17 @@ from typing import Dict
 
 
 def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
-    """Generate an interactive HTML dashboard report for BehaviorBench."""
+    """Generate an interactive HTML dashboard report for BehaviorBench 2.0."""
     summary = benchmark_data["summary"]
     records = benchmark_data["records"]
 
     rows_html = []
     for r in records:
         status = r["status"]
-        slice_name = r.get("benchmark_slice") or "—"
         score = r["quality_score"]
         feat = r["features"]
         anomalies = r.get("anomalies", [])
+        sig_name = r.get("social_signal") or "none"
 
         if status == "PASS_CLEAN":
             badge_class = "badge-clean"
@@ -35,12 +35,31 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
             badge_class = "badge-rejected"
             badge_text = "Rejected"
 
-        anom_text = "<br>".join([f"⚠️ {a}" for a in anomalies]) if anomalies else "<span style='color: #10b981;'>✓ Pass (No Anomalies)</span>"
+        # Signal badge class
+        sig_style = "background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;"
+        if "hesitation" in sig_name:
+            sig_style = "background: #fef3c7; color: #92400e; border: 1px solid #fde68a;"
+        elif "agreement" in sig_name:
+            sig_style = "background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;"
+        elif "expressive" in sig_name:
+            sig_style = "background: #fce7f3; color: #9d174d; border: 1px solid #fbcfe8;"
+        elif "reflection" in sig_name:
+            sig_style = "background: #ccfbf1; color: #115e59; border: 1px solid #99f6e4;"
+        elif "clean" in sig_name:
+            sig_style = "background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;"
 
-        rows_html.append(f"""
+        anom_text = (
+            "<br>".join([f"⚠️ {a}" for a in anomalies])
+            if anomalies
+            else "<span style='color: #10b981;'>✓ Pass (No Anomalies)</span>"
+        )
+
+        rows_html.append(
+            f"""
         <tr>
           <td><strong style="color: #0f172a;">{r['clip_id']}</strong></td>
           <td><span class="badge {badge_class}">{badge_text}</span></td>
+          <td><span class="badge" style="{sig_style}">{sig_name}</span></td>
           <td>
             <div style="display: flex; align-items: center; gap: 8px;">
               <strong>{score}</strong>
@@ -53,15 +72,23 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
           <td>{feat['av_sync_drift_ms']:+.1f} ms</td>
           <td style="font-size: 0.82rem;">{anom_text}</td>
         </tr>
-        """)
+        """
+        )
 
     table_body = "\n".join(rows_html)
+
+    # Parquet list html
+    parquet_items = ""
+    if "parquet_paths" in benchmark_data:
+        for split_name, path in benchmark_data["parquet_paths"].items():
+            base_name = os.path.basename(path)
+            parquet_items += f"""<span class="parquet-badge">📦 {split_name}: {base_name}</span> """
 
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>BehaviorBench - Multimodal Benchmark Report</title>
+  <title>BehaviorBench 2.0 - Multimodal Benchmark Report</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -79,7 +106,7 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
       line-height: 1.5;
     }}
     .container {{
-      max-width: 1200px;
+      max-width: 1240px;
       margin: 0 auto;
     }}
     .header {{
@@ -116,6 +143,22 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
       padding: 6px 12px;
       border-radius: 6px;
       border: 1px solid #cbd5e1;
+    }}
+    .parquet-row {{
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }}
+    .parquet-badge {{
+      font-family: monospace;
+      font-size: 0.75rem;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 4px 10px;
+      border-radius: 6px;
     }}
     /* KPI Cards */
     .kpi-grid {{
@@ -201,17 +244,18 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
       border: 1px solid #e9d5ff;
     }}
     .badge-flagged {{
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
+      background: #fef9c3;
+      color: #854d0e;
+      border: 1px solid #fef08a;
     }}
     .badge-rejected {{
       background: #fee2e2;
       color: #991b1b;
       border: 1px solid #fecaca;
     }}
+    /* Progress Bar */
     .progress-bar-bg {{
-      width: 70px;
+      width: 60px;
       height: 7px;
       background: #e2e8f0;
       border-radius: 4px;
@@ -219,13 +263,13 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
     }}
     .progress-bar-fill {{
       height: 100%;
-      background: #2563eb;
+      background: #10b981;
       border-radius: 4px;
     }}
     .footer {{
       margin-top: 24px;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: #64748b;
     }}
   </style>
@@ -235,57 +279,60 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
     <div class="header">
       <div class="title-row">
         <div>
-          <h1>BehaviorBench Inspection Dashboard</h1>
-          <div class="tagline">Automated Multimodal Data Quality & Regression Benchmark Suite for Non-Verbal AI</div>
+          <h1>BehaviorBench 2.0 🎯</h1>
+          <div class="tagline">Multimodal Quality Gatekeeper & "Gold Slice" Social Signal Benchmark Platform</div>
         </div>
-        <div class="hash-badge" title="Deterministic SHA-256 integrity hash of this benchmark slice">
-          SHA-256: {summary['manifest_sha256_fingerprint'][:16]}...
+        <div>
+          <span class="hash-badge">SHA-256: {summary['manifest_sha256_fingerprint'][:16]}...</span>
         </div>
+      </div>
+      <div class="parquet-row">
+        <span style="font-size: 0.82rem; font-weight: 600; color: #475569;">ML Training Splits:</span>
+        {parquet_items}
       </div>
     </div>
 
-    <!-- KPIs -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Total Clips Processed</div>
+        <div class="kpi-label">Total Clips</div>
         <div class="kpi-value">{summary['total_clips_analyzed']}</div>
         <div class="kpi-sub">Conversational streams</div>
       </div>
-      <div class="kpi-card" style="border-left: 4px solid #10b981;">
-        <div class="kpi-label">Pass Rate</div>
-        <div class="kpi-value" style="color: #10b981;">{summary['overall_pass_rate_pct']}%</div>
-        <div class="kpi-sub">{summary['clean_baseline_count']} Clean + {summary['gold_slice_edge_case_count']} Edge Cases</div>
-      </div>
-      <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
-        <div class="kpi-label">Gold-Slice Edge Cases</div>
-        <div class="kpi-value" style="color: #8b5cf6;">{summary['gold_slice_edge_case_count']}</div>
-        <div class="kpi-sub">Hesitations & Head Turns</div>
-      </div>
-      <div class="kpi-card" style="border-left: 4px solid #ef4444;">
-        <div class="kpi-label">Flagged / Rejected</div>
-        <div class="kpi-value" style="color: #ef4444;">{summary['flagged_count'] + summary['rejected_count']}</div>
-        <div class="kpi-sub">{summary['rejected_count']} Critical + {summary['flagged_count']} Flagged</div>
+      <div class="kpi-card">
+        <div class="kpi-label">Clean Baseline</div>
+        <div class="kpi-value" style="color: #166534;">{summary['clean_baseline_count']}</div>
+        <div class="kpi-sub">Passed all gates</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Mean Quality Score</div>
-        <div class="kpi-value">{summary['mean_quality_score']} <span style="font-size: 1rem; color: #94a3b8;">/ 100</span></div>
-        <div class="kpi-sub">Across full test batch</div>
+        <div class="kpi-label">Gold-Slice Edge Cases</div>
+        <div class="kpi-value" style="color: #6b21a8;">{summary['gold_slice_edge_case_count']}</div>
+        <div class="kpi-sub">Targeted social signals</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Quarantined / Rejected</div>
+        <div class="kpi-value" style="color: #dc2626;">{summary['flagged_count'] + summary['rejected_count']}</div>
+        <div class="kpi-sub">Blocked from training</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Pass Rate</div>
+        <div class="kpi-value" style="color: #0284c7;">{summary['overall_pass_rate_pct']}%</div>
+        <div class="kpi-sub">Mean Score: {summary['mean_quality_score']} / 100</div>
       </div>
     </div>
 
-    <!-- Inspection Table -->
     <div class="table-card">
       <table>
         <thead>
           <tr>
             <th>Clip ID</th>
-            <th>Validation Status</th>
+            <th>Gate Status</th>
+            <th>Social Signal</th>
             <th>Quality Score</th>
-            <th>Acoustic Pauses</th>
-            <th>Audio Clipping (SNR)</th>
-            <th>Head Movement Variance</th>
+            <th>Speech / Pauses</th>
+            <th>Audio Acoustics</th>
+            <th>Head Kinetics</th>
             <th>AV Sync Drift</th>
-            <th>Anomalies & Gating Verdict</th>
+            <th>Anomalies / Gate Result</th>
           </tr>
         </thead>
         <tbody>
@@ -295,15 +342,15 @@ def generate_html_report(benchmark_data: Dict, output_file: str) -> str:
     </div>
 
     <div class="footer">
-      BehaviorBench v0.1.0 &bull; Built by Raviteja Maddela (MSc Computer Science, DTU) &bull; Designed for Applied Multimodal ML at Interhuman AI
+      Generated automatically by <strong>BehaviorBench 2.0</strong> &bull; DTU MSc Computer Science (AI & Data Science)
     </div>
   </div>
 </body>
 </html>
 """
 
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+    with open(output_file, "w") as f:
         f.write(html_content)
 
     return output_file
