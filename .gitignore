@@ -23,3 +23,7 @@ temp_*
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Hugging Face downloaded raw cache
+sample_data/hf_*
+output/huggingface_run/extracted_wavs/
